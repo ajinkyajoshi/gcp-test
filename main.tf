@@ -1,5 +1,5 @@
 resource "google_monitoring_alert_policy" "alert_policy" {
-  project = "terraform-350522"
+  project = "project-code"
   for_each = var.monitoring_alert_policy
     display_name = each.value.display_name
     combiner     = each.value.combiner

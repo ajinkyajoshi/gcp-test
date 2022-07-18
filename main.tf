@@ -1,5 +1,10 @@
-/*resource "google_monitoring_alert_policy" "alert_policy" {
-  project = "project-code"
+resource "google_storage_bucket" "gcs" {
+    name = "ajinkya-bhavika"
+    location = "us"
+}
+/*
+resource "google_monitoring_alert_policy" "alert_policy" {
+  project = "xyz"
   for_each = var.monitoring_alert_policy
     display_name = each.value.display_name
     combiner     = each.value.combiner
@@ -20,16 +25,18 @@
     foo = "bar"
   }
 }
+
 */
+
 resource "google_monitoring_alert_policy" "alert_policy" {
-  project = "project-code"
+  project = "xyz"
   for_each = var.monitoring_alert_policy
     display_name = each.value.display_name
     combiner     = each.value.combiner
     conditions {
       display_name = each.value.condition_display_name
       condition_threshold {
-        filter     = each.value.filter AND each.value.filter1 AND each.value.filter2
+        filter     = each.value.filter
         duration   = each.value.duration
         comparison = each.value.comparison
         aggregations {
@@ -39,14 +46,12 @@ resource "google_monitoring_alert_policy" "alert_policy" {
       }
     }
 
- dynamic user_labels = {
-    for_each var.labels
-    content {
- severity = user_labels.value["severity"]
- resource = user_labels.value["resource.type"]
+ user_labels = {
+     severity = each.value.severity
+     resourcetype = each.value.resource_type
     }
-  }
-documentation {
+
+ documentation {
   content = "telecom-interconnect-alert | P1 | DC Traffic Check"
-}  
-}  
+ }
+}

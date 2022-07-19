@@ -19,6 +19,9 @@ policies = [
     user_labels = {
       environment = "examples"
     }
+    documentation = {
+  content = "telecom-interconnect-alert | P1 | DC Traffic Check"
+}
   },
   {
     display_name = "Alert policy1"
@@ -69,5 +72,8 @@ policies = [
     user_labels = {
       environment1 = "examples1"
     }
+   documentation = {
+  content = "VM-interconnect-alert | P1 | AC Traffic Check"
+}
   }
 ]

@@ -1,92 +1,85 @@
-resource "google_storage_bucket" "gcs" {
-    name = "ajinkya-bhavika"
-    location = "us"
-}
-/*
-resource "google_monitoring_alert_policy" "alert_policy" {
-  project = "xyz"
-  for_each = var.monitoring_alert_policy
-    display_name = each.value.display_name
-    combiner     = each.value.combiner
-    conditions {
-      display_name = each.value.condition_display_name
-      condition_threshold {
-        filter     = each.value.filter
-        duration   = each.value.duration
-        comparison = each.value.comparison
-        aggregations {
-          alignment_period   = each.value.alignment_period
-          per_series_aligner = each.value.per_series_aligner
-        }
-      }
+locals {
+  policies = [
+    for policy in var.policies : {
+      display_name = policy.display_name
+      combiner     = policy.combiner
+      conditions   = policy.conditions
+      #enabled               = lookup(policy, "enabled", true)
+      #notification_channels = lookup(policy, "notification_channels", [])
+      user_labels = lookup(policy, "user_labels", null)
+      #documentation         = lookup(policy, "documentation", null)
     }
-
-  user_labels = {
-    foo = "bar"
-  }
+  ]
 }
 
-*/
 
-/*resource "google_monitoring_alert_policy" "alert_policy" {
-  project = "xyz"
-  for_each = var.monitoring_alert_policy
-    display_name = each.value.display_name
-    combiner     = each.value.combiner
-    conditions {
-      display_name = each.value.condition_display_name
-      condition_threshold {
-        filter     = each.value.filter
-        duration   = each.value.duration
-        comparison = each.value.comparison
-        aggregations {
-          alignment_period   = each.value.alignment_period
-          per_series_aligner = each.value.per_series_aligner
-        }
-      }
-    }
 
- user_labels = {
-     severity = each.value.severity
-     resourcetype = each.value.resource_type
-    }
+resource "google_monitoring_alert_policy" "policies" {
+  for_each     = { for policy in var.policies : lower(policy.display_name) => policy }
+  display_name = each.value.display_name
+  project      = "xyz"
+  combiner     = each.value.combiner
+  #enabled               = each.value.enabled
+  #notification_channels = each.value.notification_channels
+  user_labels = each.value.user_labels
 
- documentation {
-  content = "telecom-interconnect-alert | P1 | DC Traffic Check"
- }
-}
-*/
-    
-resource "google_monitoring_alert_policy" "alert_policy" {
-  project = "xyz"
- # notification_channels = [resource.google_monitoring_notification_channel.snow-notification.name]
-  for_each = var.monitoring_alert_policy
-    display_name = each.value.display_name
-    combiner     = each.value.combiner
-    conditions {
-      display_name = each.value.condition_display_name
-      condition_threshold {
-        filter     = each.value.filter
-        duration   = each.value.duration
-        comparison = each.value.comparison
-          aggregations {
-           alignment_period   = each.value.alignment_period
-           per_series_aligner = each.value.per_series_aligner
-           cross_series_reducer=try([each.value.cross_series_reducer],[])
+
+  conditions {
+    display_name = each.value.conditions.display_name
+    name         = lookup(each.value, "name", null)
+
+    dynamic "condition_threshold" {
+      for_each = lookup(each.value.conditions, "condition_threshold", null) == null ? [] : [each.value.conditions.condition_threshold]
+      content {
+        duration           = lookup(condition_threshold.value, "duration", null)
+        comparison         = lookup(condition_threshold.value, "comparison", null)
+        threshold_value    = lookup(condition_threshold.value, "threshold_value", null)
+        denominator_filter = lookup(condition_threshold.value, "denominator_filter", null)
+        filter             = lookup(condition_threshold.value, "filter", null)
+
+        dynamic "aggregations" {
+          for_each = lookup(condition_threshold.value, "aggregations", null) == null ? [] : [condition_threshold.value.aggregations]
+          content {
+            per_series_aligner   = lookup(aggregations.value, "per_series_aligner", null)
+            group_by_fields      = lookup(aggregations.value, "group_by_fields", [])
+            alignment_period     = lookup(aggregations.value, "alignment_period", null)
+            cross_series_reducer = lookup(aggregations.value, "cross_series_reducer", null)
           }
-     
-            trigger {
-            count = each.value.trigger_count
-            percent = try([each.value.percent],[])
-            }
-      } 
-    }
-    user_labels = {
-     severity = each.value.severity
-     resourcetype = each.value.resource_type
+        }
+        dynamic "trigger" {
+          for_each = lookup(condition_threshold.value, "trigger", null) == null ? [] : [condition_threshold.value.trigger]
+          content {
+            percent = lookup(trigger.value, "percent", null)
+            count   = lookup(trigger.value, "count", null)
+          }
+        }
+      }
     }
 
-    documentation {
-      content = "telecom-interconnect-alert | P1 | DC Traffic Check"
+
+
+    dynamic "condition_absent" {
+      for_each = lookup(each.value.conditions, "condition_absent", null) == null ? [] : [each.value.conditions.condition_absent]
+      content {
+        duration = lookup(condition_absent.value, "duration", null)
+        filter   = lookup(condition_absent.value, "filter", null)
+        dynamic "aggregations" {
+          for_each = lookup(condition_absent.value, "aggregations", null) == null ? [] : [condition_absent.value.aggregations]
+          content {
+            per_series_aligner   = lookup(aggregations.value, "per_series_aligner", null)
+            group_by_fields      = lookup(aggregations.value, "group_by_fields", [])
+            alignment_period     = lookup(aggregations.value, "alignment_period", null)
+            cross_series_reducer = lookup(aggregations.value, "cross_series_reducer", null)
+          }
+        }
+        dynamic "trigger" {
+          for_each = lookup(condition_absent.value, "trigger", null) == null ? [] : [condition_absent.value.trigger]
+          content {
+            percent = lookup(trigger.value, "percent", null)
+            count   = lookup(trigger.value, "count", null)
+          }
+        }
+      }
     }
+  }
 }

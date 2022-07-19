@@ -6,7 +6,7 @@ locals {
       conditions   = policy.conditions
       notification_channels = lookup(policy, "notification_channels", [])
       user_labels = lookup(policy, "user_labels", null)
-      documentation = lookup(policy, "documentation", null)
+      #documentation = lookup(policy, "documentation", null)
     }
   ]
 }
@@ -74,9 +74,10 @@ resource "google_monitoring_alert_policy" "policies" {
     }
   }
   dynamic "documentation" {
-    for_each = var.documentation
+    for_each = lookup(each.value, "documentation", null) == null ? [] : [each.value.documentation]
     content {
-      content = documentation.value["content"]
+      content   = documentation.value.content
     }
+  }
   }
 }

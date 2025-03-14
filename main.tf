@@ -11,6 +11,7 @@ locals {
   ]
 }
 
+
 resource "google_monitoring_alert_policy" "policies" {
   for_each     = { for policy in var.policies : lower(policy.display_name) => policy }
   display_name = each.value.display_name
